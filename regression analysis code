@@ -1,0 +1,47 @@
+library(magrittr)
+
+#Reading in outputs and databases to combine into one file, and then saving this file 
+spm_output <- read.csv("ccf_spm_output.csv")
+facts_db <- read.csv("FACTS_database.csv")
+combined_data <- merge(spm_output, facts_db, by ="facts_id")
+write.csv(combined_data, file = "final_database.csv")
+
+#Regression Analysis 
+#Happiness 
+happiness_cbcl <- lm(CBCL_W2_ext2 ~ child_sex + happiness_mean + AUSEI06, data = combined_data)
+summary(happiness_cbcl)
+
+happiness_scas <- lm(SCAS_W2_Total_score ~ child_sex + happiness_mean + AUSEI06, data = combined_data) 
+summary(happiness_scas)
+
+happiness_cdi <- lm(Child_CDI_W2_Total_2 ~ child_sex + happiness_mean + AUSEI06, data = combined_data)
+summary(happiness_cdi)
+
+#sadness 
+sadness_cbcl <- lm(CBCL_W2_ext2 ~ child_sex + sadness_mean + AUSEI06, data = combined_data) 
+summary(sadness_cbcl)
+
+sadness_scas <- lm(SCAS_W2_Total_score ~ child_sex + sadness_mean + AUSEI06, data = combined_data)
+summary(sadness_scas)
+
+sadness_cdi <- lm(Child_CDI_W2_Total_2 ~ child_sex + sadness_mean + AUSEI06, data = combined_data)
+summary(sadness_cdi)
+
+#Mediation 
+process (data = combined_data, 
+         y = "CBCL_W2_ext2", 
+         x = "happiness_mean", 
+         m = "peh_wb_precuneouscortex", 
+         model = 4)
+
+
+
+
+
+
+
+
+
+
+
+
