@@ -1,38 +1,191 @@
-library(magrittr)
+#installing packages 
+install.packages("olsrr")
+library(olsrr)
+install.packages("MASS")
+library(MASS)
+library(gplots)
 
 #Reading in outputs and databases to combine into one file, and then saving this file 
-spm_output <- read.csv("ccf_spm_output.csv")
-facts_db <- read.csv("FACTS_database.csv")
-combined_data <- merge(spm_output, facts_db, by ="facts_id")
-write.csv(combined_data, file = "final_database.csv")
+combined_data <- read.csv("final_database copy.csv")
 
 #Regression Analysis 
 #Happiness 
 happiness_cbcl <- lm(CBCL_W2_ext2 ~ child_sex + happiness_mean + AUSEI06, data = combined_data)
 summary(happiness_cbcl)
+ols_test_normality(happiness_cbcl)
+#residuals are not normally distributed 
 
 happiness_scas <- lm(SCAS_W2_Total_score ~ child_sex + happiness_mean + AUSEI06, data = combined_data) 
 summary(happiness_scas)
+ols_test_normality(happiness_scas)
 
 happiness_cdi <- lm(Child_CDI_W2_Total_2 ~ child_sex + happiness_mean + AUSEI06, data = combined_data)
 summary(happiness_cdi)
+ols_test_normality(happiness_cdi)
 
 #sadness 
 sadness_cbcl <- lm(CBCL_W2_ext2 ~ child_sex + sadness_mean + AUSEI06, data = combined_data) 
 summary(sadness_cbcl)
+ols_test_normality(sadness_cbcl)
+#residuals are not normally distributed 
 
 sadness_scas <- lm(SCAS_W2_Total_score ~ child_sex + sadness_mean + AUSEI06, data = combined_data)
 summary(sadness_scas)
+ols_test_normality(sadness_scas)
 
 sadness_cdi <- lm(Child_CDI_W2_Total_2 ~ child_sex + sadness_mean + AUSEI06, data = combined_data)
 summary(sadness_cdi)
+ols_test_normality(sadness_cdi)
 
-#Mediation 
-process (data = combined_data, 
-         y = "CBCL_W2_ext2", 
-         x = "happiness_mean", 
-         m = "peh_wb_precuneouscortex", 
-         model = 4)
+
+#robust regression on all for the sake of continuity 
+
+#ROBUST REGRESSION 
+robust_happiness_cbcl_SES <- rlm(CBCL_W2_ext2 ~ child_sex + happiness_mean + AUSEI06, data = combined_data)
+summary(robust_happiness_cbcl)
+
+robust_happiness_scas_SES <- rlm(SCAS_W2_Total_score ~ child_sex + happiness_mean + AUSEI06, data = combined_data) 
+summary(robust_happiness_scas)
+
+robust_happiness_cdi_SES <- rlm(Child_CDI_W2_Total_2 ~ child_sex + happiness_mean + AUSEI06, data = combined_data)
+summary(robust_happiness_cdi)
+
+#sadness 
+robust_sadness_cbcl_SES <- rlm(CBCL_W2_ext2 ~ child_sex + sadness_mean + AUSEI06, data = combined_data) 
+summary(robust_sadness_cbcl)
+
+robust_sadness_scas_SES <- rlm(SCAS_W2_Total_score ~ child_sex + sadness_mean + AUSEI06, data = combined_data)
+summary(robust_sadness_scas)
+
+robust_sadness_cdi_SES <- rlm(Child_CDI_W2_Total_2 ~ child_sex + sadness_mean + AUSEI06, data = combined_data)
+summary(robust_sadness_cdi)
+
+
+#ROBUST REGRESSION without SES as a covariate 
+robust_happiness_cbcl <- rlm(CBCL_W2_ext2 ~ child_sex + happiness_mean, data = combined_data)
+summary(robust_happiness_cbcl)
+
+robust_happiness_scas <- rlm(SCAS_W2_Total_score ~ child_sex + happiness_mean, data = combined_data) 
+summary(robust_happiness_scas)
+
+robust_happiness_cdi <- rlm(Child_CDI_W2_Total_2 ~ child_sex + happiness_mean, data = combined_data)
+summary(robust_happiness_cdi)
+
+#sadness 
+robust_sadness_cbcl <- rlm(CBCL_W2_ext2 ~ child_sex + sadness_mean, data = combined_data) 
+summary(robust_sadness_cbcl)
+
+robust_sadness_scas <- rlm(SCAS_W2_Total_score ~ child_sex + sadness_mean, data = combined_data)
+summary(robust_sadness_scas)
+
+robust_sadness_cdi <- rlm(Child_CDI_W2_Total_2 ~ child_sex + sadness_mean, data = combined_data)
+summary(robust_sadness_cdi)
+
+
+#Correlation matrices: 
+happiness_cbcl_columns <- combined_data[, c("happiness_mean", "CBCL_W2_ext2", "AUSEI06")]
+happiness_cbcl_matrix <- cor(happiness_cbcl_columns, use = "complete.obs")
+
+happiness_scas_columns <- combined_data[, c("happiness_mean", "SCAS_W2_Total_score", "AUSEI06")]
+happiness_scas_matrix <- cor(happiness_scas_columns, use = "complete.obs")
+
+happiness_cdi_columns <- combined_data[, c("happiness_mean", "Child_CDI_W2_Total_2", "AUSEI06")]
+happiness_cdi_matrix <- cor(happiness_cdi_columns, use = "complete.obs")
+
+sadness_cbcl_columns <- combined_data[, c("sadness_mean", "CBCL_W2_ext2", "AUSEI06")]
+sadness_cbcl_matrix <- cor(sadness_cbcl_columns, use = "complete.obs")
+
+sadness_scas_columns <- combined_data[, c("sadness_mean", "SCAS_W2_Total_score", "AUSEI06")]
+sadness_scas_matrix <- cor(sadness_scas_columns, use = "complete.obs")
+
+sadness_cdi_columns <- combined_data[, c("sadness_mean", "Child_CDI_W2_Total_2", "AUSEI06")]
+sadness_cdi_matrix <- cor(sadness_cdi_columns, use = "complete.obs")
+
+
+#Mediation Models
+#Model 1: Negative effect of sadness, PFC mask, pre-frontal cortex 
+#CBCL 
+process(data = combined_data, 
+        y = "CBCL_W2_ext2",
+        x = "sadness_mean", 
+        m = "nes_pfc_paracingulategyrus", 
+        model = 4)
+#SCAS
+process(data = combined_data, 
+        y = "SCAS_W2_Total_score",
+        x = "sadness_mean", 
+        m = "nes_pfc_paracingulategyrus", 
+        model = 4)
+#CDI
+process(data = combined_data, 
+        y = "Child_CDI_W2_Total_2",
+        x = "sadness_mean", 
+        m = "nes_pfc_paracingulategyrus", 
+        model = 4)
+
+#Model 2: Positive effect of happiness, Whole brain, precuneous cortex 
+#CBCL 
+process(data = combined_data, 
+        y = "CBCL_W2_ext2",
+        x = "happiness_mean", 
+        m = "peh_wb_precuneouscortex", 
+        model = 4)
+#SCAS
+process(data = combined_data, 
+        y = "SCAS_W2_Total_score",
+        x = "happiness_mean", 
+        m = "peh_wb_precuneouscortex", 
+        model = 4)
+#CDI
+process(data = combined_data, 
+        y = "Child_CDI_W2_Total_2",
+        x = "happiness_mean", 
+        m = "peh_wb_precuneouscortex", 
+        model = 4)
+
+#Model 3: Positive effect of happiness, PFC mask, frontal pole 
+#CBCL 
+process(data = combined_data, 
+        y = "CBCL_W2_ext2",
+        x = "happiness_mean", 
+        m = "peh_pfc_frontalpole", 
+        model = 4)
+#SCAS
+process(data = combined_data, 
+        y = "SCAS_W2_Total_score",
+        x = "happiness_mean", 
+        m = "peh_pfc_frontalpole", 
+        model = 4)
+#CDI
+process(data = combined_data, 
+        y = "Child_CDI_W2_Total_2",
+        x = "happiness_mean", 
+        m = "peh_pfc_frontalpole", 
+        model = 4)
+
+#Model 4: Positive effect of happiness, PFC mask, frontal pole (second cluster) 
+#CBCL 
+process(data = combined_data, 
+        y = "CBCL_W2_ext2",
+        x = "happiness_mean", 
+        m = "peh_pfc_frontalpole2", 
+        model = 4)
+#SCAS
+process(data = combined_data, 
+        y = "SCAS_W2_Total_score",
+        x = "happiness_mean", 
+        m = "peh_pfc_frontalpole2", 
+        model = 4)
+#CDI
+process(data = combined_data, 
+        y = "Child_CDI_W2_Total_2",
+        x = "happiness_mean", 
+        m = "peh_pfc_frontalpole2", 
+        model = 4)
+
+
+
+
 
 
 
